@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "structuras.h"
+#include <string.h>
 
 
 void inicializar_nodos(SistemaEcoFlow* sistema){
