@@ -3,3 +3,6 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include "sincronizacion.h"
+#include "procesos.h"
+#include  "structuras.h"
+
