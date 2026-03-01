@@ -1,0 +1,23 @@
+[33mcommit 3ca3c85a3d56dc59a1ad8f69120ec583720619c6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m)[m
+Author: gsilva <silva17g66@gmail.com>
+Date:   Sat Feb 28 11:01:09 2026 -0400
+
+    Definicion de estructuras a utilizar
+
+[33mcommit 224f27f6aec0be5f9bf10d56593fadf5183661ba[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: DM <92455106+DervisMartinez@users.noreply.github.com>
+Date:   Sat Feb 28 00:01:01 2026 -0400
+
+    Add files via upload
+
+[33mcommit df329c27df3448a0fca8a27318abaa02639dcb17[m
+Author: DM <92455106+DervisMartinez@users.noreply.github.com>
+Date:   Fri Feb 27 23:19:25 2026 -0400
+
+    Fix typo in project title in README.md
+
+[33mcommit 2ec13b5594a02eccf310e2d193727be3178129c4[m
+Author: DM <92455106+DervisMartinez@users.noreply.github.com>
+Date:   Fri Feb 27 23:15:58 2026 -0400
+
+    Initial commit
