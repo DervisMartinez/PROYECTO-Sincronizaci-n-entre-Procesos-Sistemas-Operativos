@@ -28,13 +28,13 @@ void terminar_lectura(BloqueHorario* bloque) {
     sem_post(&bloque->mutex_lectores);
 }
 
-void iniciar_escritura(BloqueHorario* bloque) {
+/*void iniciar_escritura(BloqueHorario* bloque) {
     sem_wait(&bloque->escritor);
 }
 
 void terminar_escritura(BloqueHorario* bloque) {
     sem_post(&bloque->escritor);
-}
+}*/
 
 // ==================== FUNCIONES DE USUARIO ====================
 
@@ -51,7 +51,7 @@ int reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora, int tipo_us
     // Buscar nodo disponible
     int nodo_asignado = -1;
     for (int i = 0; i < NUM_NODOS; i++) {
-        if (bloque->nodos_disponibles[i] == 1) {
+        if (bloque->usuarios_en_nodo[i] == -1) {
             nodo_asignado = i;
             break;
         }
@@ -59,7 +59,7 @@ int reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora, int tipo_us
     
     if (nodo_asignado != -1) {
         // Reservar el nodo
-        bloque->nodos_disponibles[nodo_asignado] = 0;
+        bloque->usuarios_en_nodo[nodo_asignado] = 0;
         bloque->usuarios_en_nodo[nodo_asignado] = id_usuario;
         bloque->reservas_realizadas++;
         
@@ -104,7 +104,7 @@ int cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
         for (int i = 0; i < NUM_NODOS; i++) {
             if (bloque->usuarios_en_nodo[i] == id_usuario) {
                 // Cancelar reserva
-                bloque->nodos_disponibles[i] = 1;
+                bloque->usuarios_en_nodo[i] = 1;
                 bloque->usuarios_en_nodo[i] = -1;
                 cancelado = 1;
                 
