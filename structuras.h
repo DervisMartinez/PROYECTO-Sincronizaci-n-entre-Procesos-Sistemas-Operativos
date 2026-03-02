@@ -199,6 +199,8 @@ void inicializar_bloques(SistemaEcoFlow* sistema);
 void inicializar_cola(ColaSolicitudes* cola);
 void inicializar_sistema(SistemaEcoFlow* sistema);
 void limpiar_cola(ColaSolicitudes* cola);
+
+//falta ser implementada
 void generar_reporte_mensual(SistemaEcoFlow* sistema);
 
 

@@ -63,7 +63,7 @@ void inicializar_cola(ColaSolicitudes* cola){
 
 void inicializar_sistema(SistemaEcoFlow* sistema){
 
-    //inicializar auditor
+    //inicializar auditor--------------------------------------------------
     sistema->auditor.consumos_criticos_no_justificados = 0;
     sistema->auditor.consumos_criticos_validados = 0;
     sistema->auditor.multas_generadas = 0;
@@ -72,7 +72,7 @@ void inicializar_sistema(SistemaEcoFlow* sistema){
     sistema->auditor.tiempo_espera_promedio = 0;
     sem_init(&sistema->auditor.mutex_auditoria,0,0);
 
-    //inicializar monitor
+    //inicializar monitor---------------------------------------------------
     for(int i=0; i<NUM_NODOS; i++){
 
         sistema->monitor.presion_actual[i] = 50 + rand() % 50;
@@ -85,12 +85,27 @@ void inicializar_sistema(SistemaEcoFlow* sistema){
     sem_init(&sistema->monitor.mutex_monitor,0,1);
 
 
-    //inicializar el resto de variables de sistema
+    //inicializar el resto de variables de sistema---------------------------
 
+    sistema->solicitudes_dia_actual = 0;
+    sistema->dia_actual = 1;
+    sistema->simulacion_activa = 1;
+
+    sistema->total_metros_cubicos = 0;
+    sistema->total_amonestaciones = 0;
+    sistema->total_consumos_criticos = 0;
+    sistema->total_consumos_estandar = 0;
+    sistema->total_reservas_exitosas = 0;
+    sistema->total_reservas_fallidas = 0;
+    
+    sem_init(&sistema->mutex_global,0,1);
+    sem_init(&sistema->mutex_estadisticas,0,1);
+    sem_init(&sistema->mutex_dia,0,1);
+
+    sistema->tiempo_inicio = time(NULL);
+    
 
 }
-
-
 
 
 
