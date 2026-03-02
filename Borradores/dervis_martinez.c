@@ -5,7 +5,7 @@
 
 
 /* la funcion Iniciar escritura debe reemplazar por semaforo al igual que terminar escritura
-por el signal  */
+por el signal ----> resuelto */
 
 
 
