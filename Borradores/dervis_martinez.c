@@ -42,6 +42,31 @@ void sem_post(BloqueHorario* bloque) {
     sem_post(&bloque->escritor);
 }*/
 
+void limpiar_sistema(SistemaEcoFlow* sistema) {
+    for (int i = 0; i < NUM_NODOS; i++) {
+        sem_destroy(&sistema->nodos[i].mutex_nodo);
+        sem_destroy(&sistema->nodos[i].mutex_consumo);
+    }
+    
+    for (int h = 0; h < TOTAL_HORAS; h++) {
+        sem_destroy(&sistema->bloques[h].mutex_lectores);
+        sem_destroy(&sistema->bloques[h].escritor);
+    }
+    
+    sem_destroy(&sistema->cola_solicitudes.mutex_cola);
+    sem_destroy(&sistema->cola_solicitudes.lleno);
+    sem_destroy(&sistema->cola_solicitudes.vacio);
+    
+    sem_destroy(&sistema->mutex_global);
+    sem_destroy(&sistema->mutex_estadisticas);
+    sem_destroy(&sistema->mutex_dia);
+    sem_destroy(&sistema->auditor.mutex_auditoria);
+    sem_destroy(&sistema->monitor.mutex_monitor);
+}
+
+
+
+
 // ==================== FUNCIONES DE USUARIO ====================
 
 int reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora, int tipo_usuario) {
