@@ -65,7 +65,7 @@ typedef struct {
 
 typedef struct {
     int hora;                      // 6,7,...,17
-    int nodos_disponibles[NUM_NODOS]; // 0=ocupado, 1=disponible (no es estrictamente necesario, evaluaremos si dejarlo o no, se puede manejar con nodos_disponibles)
+   // int nodos_disponibles[NUM_NODOS]; // 0=ocupado, 1=disponible (no es estrictamente necesario, evaluaremos si dejarlo o no, se puede manejar con nodos_disponibles)
     int usuarios_en_nodo[NUM_NODOS];   // ID del usuario que ocupa (-1 si libre)
 
     // Semáforos para patrón lectores-escritores
@@ -120,7 +120,7 @@ typedef struct {
     int nodos_ocupados_promedio;
     int tiempo_espera_promedio;
 
-    sem_t mutex_auditoria;
+    sem_t mutex_auditoria; //usado para recibir la notificacion de consumo irregular
 } AuditorFlujo;
 
 
@@ -199,6 +199,8 @@ void inicializar_bloques(SistemaEcoFlow* sistema);
 void inicializar_cola(ColaSolicitudes* cola);
 void inicializar_sistema(SistemaEcoFlow* sistema);
 void limpiar_cola(ColaSolicitudes* cola);
+
+//falta ser implementada
 void generar_reporte_mensual(SistemaEcoFlow* sistema);
 
 
