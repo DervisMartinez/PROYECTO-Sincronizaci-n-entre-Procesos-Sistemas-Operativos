@@ -12,11 +12,11 @@
 // ============================================================================
 // CONSTANTES GLOBALES
 
-#define NUM_NODOS 10                // Válvulas principales
-#define HORA_INICIO 6               // 6:00 AM
-#define HORA_FIN 18                 // 6:00 PM
-#define TOTAL_HORAS 12              // 6 a 17 (18 es cierre)
-#define MAX_SOLICITUDES_DIA 250     // Máximo de solicitudes por día de alta demanda
+#define NUM_NODOS 10                 // Válvulas principales
+#define HORA_INICIO 6                // 6:00 AM
+#define HORA_FIN 18                  // 6:00 PM
+#define TOTAL_HORAS 12               // 6 a 17 (18 es cierre)
+#define MAX_SOLICITUDES_DIA 250      // Máximo de solicitudes por día de alta demanda
 #define DIAS_SIMULACION 30           // Un mes de simulación
 #define CONSUMO_CRITICO_LIMITE 500   // Litros para considerar crítico
 #define NUM_USUARIOS 20              // Total de usuarios (puede ajustarse)
@@ -131,7 +131,7 @@ typedef struct {
     int presion_actual[NUM_NODOS];    // Simulación de presión
     int caudal_actual[NUM_NODOS];      // Simulación de caudal, (cantidad de agua flujendo dependiendo del estado del no, ocupado o libre)
     int alertas_activas;
-    char dashboard[2048]; // guardar todo antes de mostrar cada cierto tiempo, (opcional)
+    //char dashboard[2048]; // guardar todo antes de mostrar cada cierto tiempo, (opcional)
     sem_t mutex_monitor;  
 } MonitorPresion;
 
@@ -199,8 +199,6 @@ void inicializar_bloques(SistemaEcoFlow* sistema);
 void inicializar_cola(ColaSolicitudes* cola);
 void inicializar_sistema(SistemaEcoFlow* sistema);
 void limpiar_cola(ColaSolicitudes* cola);
-
-//falta ser implementada
 void generar_reporte_mensual(SistemaEcoFlow* sistema);
 
 

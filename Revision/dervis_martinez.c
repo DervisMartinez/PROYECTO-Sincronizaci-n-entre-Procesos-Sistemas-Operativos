@@ -1,12 +1,74 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include "structuras.h"
+#include <string.h>
+
+
+
+/* la funcion Iniciar escritura debe reemplazar por semaforo al igual que terminar escritura
+por el signal ----> resuelto */
+
+
+
+void inicializar_nodos(SistemaEcoFlow* sistema){
+ for (int i = 0; i < NUM_NODOS; i++) {//  Itera sobre cada nodo, desde i = 0 hasta i = 9 (porque NUM_NODOS = 10).
+        sistema->nodos[i].id_nodo = i;
+        sistema->nodos[i].reservado = 0;
+        sistema->nodos[i].usuario_actual = -1;
+        sistema->nodos[i].hora_reserva = -1;
+        sistema->nodos[i].consumo_total_dia = 0;
+        sistema->nodos[i].consumo_total_mes = 0;
+        sistema->nodos[i].veces_reservado = 0;
+        sistema->nodos[i].ultima_modificacion = time(NULL);
+        
+        sem_init(&sistema->nodos[i].mutex_nodo, 0, 1);
+        sem_init(&sistema->nodos[i].mutex_consumo, 0, 1);
+    }
+}
+
+void terminar_lectura(BloqueHorario* bloque) {
+    sem_wait(&bloque->mutex_lectores);
+    bloque->lectores_activos--;
+    if (bloque->lectores_activos == 0) {
+        sem_post(&bloque->escritor);
+    }
+    sem_post(&bloque->mutex_lectores);
+}
+
+/*void sem_wait(BloqueHorario* bloque) {
+    sem_wait(&bloque->escritor);
+}
+
+void sem_post(BloqueHorario* bloque) {
+    sem_post(&bloque->escritor);
+}*/
+
+void limpiar_sistema(SistemaEcoFlow* sistema) {
+    for (int i = 0; i < NUM_NODOS; i++) {
+        sem_destroy(&sistema->nodos[i].mutex_nodo);
+        sem_destroy(&sistema->nodos[i].mutex_consumo);
+    }
+    
+    for (int h = 0; h < TOTAL_HORAS; h++) {
+        sem_destroy(&sistema->bloques[h].mutex_lectores);
+        sem_destroy(&sistema->bloques[h].escritor);
+    }
+    
+    sem_destroy(&sistema->cola_solicitudes.mutex_cola);
+    sem_destroy(&sistema->cola_solicitudes.lleno);
+    sem_destroy(&sistema->cola_solicitudes.vacio);
+    
+    sem_destroy(&sistema->mutex_global);
+    sem_destroy(&sistema->mutex_estadisticas);
+    sem_destroy(&sistema->mutex_dia);
+    sem_destroy(&sistema->auditor.mutex_auditoria);
+    sem_destroy(&sistema->monitor.mutex_monitor);
+}
+
+
 
 
 // ==================== FUNCIONES DE USUARIO ====================
 
-
-//RESERVAR NODO
 int reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora, int tipo_usuario) {
     if (hora < HORA_INICIO || hora >= HORA_FIN) {
         return -1;  // Fuera de horario
@@ -61,8 +123,6 @@ int reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora, int tipo_us
     return nodo_asignado;
 }
 
-//CANCELAR RESERVA
-
 int cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
     int cancelado = 0;
     
@@ -103,24 +163,4 @@ int cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
     printf(" [USUARIO %d] AMONESTACIÓN: Cancelación sin reserva activa\n", id_usuario);
     
     return 0;
-}
-
-
-//procedimiento utilizado para limpiar la cola de solicitudes al final de cada dia.
-void limpiar_cola(ColaSolicitudes* cola){
-
-    cola->frente = 0;
-    cola->final = 0; 
-    cola->count = 0;
-
-    //volver a activar el semaforo de exclusion mutua
-    sem_post(&cola->mutex_cola);
-
-    //destruir semaforos de productoor consumidor
-    sem_destroy(&cola->lleno);
-    sem_destroy(&cola->vacio);
-
-    //crear de nuevo los semaforos, creo que es mejor asi que intentar limpiarllos
-    sem_init(&cola->lleno,0,MAX_SOLICITUDES_DIA);
-    sem_init(&cola->vacio,0,0);
 }

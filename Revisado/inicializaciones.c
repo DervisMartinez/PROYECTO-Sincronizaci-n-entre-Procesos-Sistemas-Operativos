@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "structuras.h"
 
-
 // Gabriel Silva
 void inicializar_nodos(SistemaEcoFlow* sistema){
 
@@ -44,7 +43,6 @@ void inicializar_bloques(SistemaEcoFlow* sistema){
 
 }
 
-
 void inicializar_cola(ColaSolicitudes* cola){
 
     cola->frente = 0;
@@ -59,7 +57,6 @@ void inicializar_cola(ColaSolicitudes* cola){
     sem_init(&cola->lleno,0,MAX_SOLICITUDES_DIA); //todos los espacios disponible
     sem_init(&cola->vacio,0,0); //ningun elemento
 }
-
 
 void inicializar_sistema(SistemaEcoFlow* sistema){
 
@@ -104,7 +101,6 @@ void inicializar_sistema(SistemaEcoFlow* sistema){
 
     sistema->tiempo_inicio = time(NULL);
     
-
 }
 
 
