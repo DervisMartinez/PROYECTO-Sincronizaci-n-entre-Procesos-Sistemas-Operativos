@@ -166,7 +166,7 @@ void pagar_excedente (SistemaEcoFlow* sistema,int usuario_id, int hora, int nodo
 
 //PROCESO USUARIO. consumir 
 
-void consumir_agua (SistemaEcoFlow* sistema, int usuari_id, int nodo_id, int hora, int litros, int tipo_usuario){
+void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int hora, int litros, int tipo_usuario){
 
     validar_hora(hora);
 
@@ -188,7 +188,7 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuari_id, int nodo_id, int hor
 
 
     //verificacion de reservaa
-    if(sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] == usuari_id){
+    if(sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] == usuario_id){
 
         consumo_valido = 1;
 
@@ -200,6 +200,7 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuari_id, int nodo_id, int hor
 
     if(sistema->bloques[hora_actual].lectores_activos == 0){
 
+        //dar paso a los escritores
         sem_post(&sistema->bloques[hora_actual].escritor);
 
     }
@@ -207,8 +208,47 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuari_id, int nodo_id, int hor
 
 
     //RESERVA valida, generar consumo.  INCOMPLETO
+    if(consumo_valido){
 
+        //bloquear er recurso consumo dentro del nodo, exclusion mutua
+        sem_wait(&sistema->nodos[nodo_id].mutex_consumo);
 
+        //actualizacion de consumo
+        sistema->nodos[nodo_id].consumo_total_dia += litros;
+        sistema->nodos[nodo_id].consumo_total_mes += litros;
+
+        //actualizacion de estadisticas mensual
+        sem_wait(&sistema->mutex_estadisticas);
+        sistema->total_metros_cubicos += litros / 1000;
+
+        //clasificacion de consumo, (critico > 500 litros)
+        if(litros > CONSUMO_CRITICO_LIMITE){
+            
+            sistema->total_consumos_criticos ++;
+
+            //notificando al auditor por exceso
+            sem_post(&sistema->auditor.mutex_auditoria);
+
+            printf("CONSUMO CRITICO %d litros - Auditor notificado\n",litros);
+
+        }else{
+
+            sistema->total_consumos_estandar ++;
+        }
+
+        sem_post(&sistema->mutex_estadisticas);
+
+        //mostrar consumo realizado
+        printf("%s %d consumio %d litros en NODO %d (%d:00)\n",tipo_usuario== 0? "Residencial":"Industrial",usuario_id,litros,nodo_id,hora);
+
+        //liberar mutex de consumo
+        sem_post(&sistema->nodos[nodo_id].mutex_consumo);
+    }else{
+
+        printf("EL usuario %d No tiene reserca en el NODO %d para %d:00\n");
+        sem_post(&sistema->nodos[nodo_id].mutex_consumo);
+
+    }
 
 }
 
