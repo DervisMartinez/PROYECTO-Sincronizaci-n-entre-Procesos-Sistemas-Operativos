@@ -64,4 +64,3 @@ void procesar_consumo_hídrico(SistemaEcoFlow* sistema, Solicitud* sol) {
     
     sistema->total_metros_cubicos += litros;
 }
-
