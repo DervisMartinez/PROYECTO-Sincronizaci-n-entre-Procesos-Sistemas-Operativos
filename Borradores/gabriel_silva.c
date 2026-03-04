@@ -183,7 +183,6 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         //bloquear posibles escritores en este bloque
         sem_wait(&sistema->bloques[hora_actual].escritor);
     }
-
     sem_post(&sistema->bloques[hora_actual].mutex_lectores);
 
 
@@ -191,9 +190,8 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
     if(sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] == usuario_id){
 
         consumo_valido = 1;
-
     }
-
+    
     //liberacion de lectores
     sem_wait(&sistema->bloques[hora_actual].mutex_lectores);
     sistema->bloques[hora_actual].lectores_activos --;
@@ -207,7 +205,7 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
     sem_post(&sistema->bloques[hora_actual].mutex_lectores);
 
 
-    //RESERVA valida, generar consumo.  INCOMPLETO
+    //RESERVA valida, generar consumo.  
     if(consumo_valido){
 
         //bloquear er recurso consumo dentro del nodo, exclusion mutua
