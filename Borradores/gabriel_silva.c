@@ -1,5 +1,5 @@
 #include<stdio.h>
-#include "structuras.h"
+#include"structuras.h"
 
 
 void inicializar_nodos(SistemaEcoFlow* sistema){
@@ -114,7 +114,109 @@ void limpiar_cola(ColaSolicitudes* cola){
 
 
 
-//esto ya es un procedimiento, no inicializacion
-void generar_reporte_mensual(SistemaEcoFlow* sistema);
+
+//ULTIMAS AGREGACIONES -------------------------------------------------------------------------------------------
+
+// validador de hora
+void validar_hora(int hora){
+
+     if(hora < HORA_INICIO || hora > HORA_FIN){
+
+        printf("Hora %d:00 fuera de horario\n",hora);
+        return;
+
+    }
+}
+
+//PROCESO USUARIO. PAGAR PARA LA LIBERACION DEL NODO
+
+void pagar_excedente (SistemaEcoFlow* sistema,int usuario_id, int hora, int nodo_id){
+
+
+    validar_hora(hora);
+
+    int hora_actual = hora - HORA_INICIO;
+
+    //bloquear como escritor, en caso de que el nodo si este reservado por el usuario se paga para liberar lo que implica modificacion
+    sem_wait(&sistema->bloques[hora_actual].escritor);
+
+    //bloquear el nodo en espesifico, para verificar que este reservado por el usuario y modificar si asi lo es 
+    sem_wait(&sistema->nodos[nodo_id].mutex_nodo);
+    
+    //revisar bien este condicional, posible verificacion doble
+    if(sistema->nodos[nodo_id].usuario_actual == usuario_id && sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] ==usuario_id){
+
+        //registrar el pago
+        printf("Usuario %d pago el excedente por NODO %d (%d:00)\n",usuario_id,nodo_id,hora);
+
+        //liberacion del nodo
+        sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] = -1;
+        sistema->nodos[nodo_id].reservado = 0;
+        sistema->nodos[nodo_id].usuario_actual = -1;
+
+    }else{
+
+        printf("El usuario %d no tiene reserva en NODO %d para %d:00\n",usuario_id,nodo_id,hora);
+    }
+
+    sem_post(&sistema->bloques[hora_actual].escritor);
+    sem_post(&sistema->nodos[nodo_id].mutex_nodo);
+}
+
+
+//PROCESO USUARIO. consumir 
+
+void consumir_agua (SistemaEcoFlow* sistema, int usuari_id, int nodo_id, int hora, int litros, int tipo_usuario){
+
+    validar_hora(hora);
+
+    int hora_actual = hora - HORA_INICIO;
+    int consumo_valido = 0;
+
+    //verificar reserva del usuario en el nodo en la hora proporcionada
+
+    //bloquear el recurso como lector
+    sem_wait(&sistema->bloques[hora_actual].mutex_lectores);
+    sistema->bloques[hora_actual].lectores_activos ++;
+
+    if(sistema->bloques[hora_actual].lectores_activos == 1){
+        //bloquear posibles escritores en este bloque
+        sem_wait(&sistema->bloques[hora_actual].escritor);
+    }
+
+    sem_post(&sistema->bloques[hora_actual].mutex_lectores);
+
+
+    //verificacion de reservaa
+    if(sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] == usuari_id){
+
+        consumo_valido = 1;
+
+    }
+
+    //liberacion de lectores
+    sem_wait(&sistema->bloques[hora_actual].mutex_lectores);
+    sistema->bloques[hora_actual].lectores_activos --;
+
+    if(sistema->bloques[hora_actual].lectores_activos == 0){
+
+        sem_post(&sistema->bloques[hora_actual].escritor);
+
+    }
+    sem_post(&sistema->bloques[hora_actual].mutex_lectores);
+
+
+    //RESERVA valida, generar consumo.  INCOMPLETO
+
+
+
+}
+
+
+
+
+
+
+
 
 
