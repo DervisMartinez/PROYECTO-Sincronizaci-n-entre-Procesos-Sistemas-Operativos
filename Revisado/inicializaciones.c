@@ -6,7 +6,7 @@ void inicializar_nodos(SistemaEcoFlow* sistema){
 
     for(int i=0; i<NUM_NODOS; i++){
 
-        sistema->nodos[i].id_nodo = i;
+        sistema->nodos[i].id_nodo = i+1;
         sistema->nodos[i].reservado = 0;
         sistema->nodos[i].usuario_actual = -1;
         sistema->nodos[i].hora_reserva = 0;
@@ -73,7 +73,7 @@ void inicializar_sistema(SistemaEcoFlow* sistema){
     for(int i=0; i<NUM_NODOS; i++){
 
         sistema->monitor.presion_actual[i] = 50 + rand() % 50;
-        sistema->monitor.caudal_actual[i] = 0;
+       // sistema->monitor.caudal_actual[i] = 0;
         
     }
 

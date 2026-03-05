@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include "structuras.h"
 #include "iniciar_sistema.h"
+#include "procesos_hilos.h"
 
 int main(){
-    SistemaEcoFlow* sistema;
+   // SistemaEcoFlow sistema ;
 
-    inicializar_sistema_ecoflow(sistema);
+    //inicializar_sistema_ecoflow(&sistema);
 
     return 0;
 }

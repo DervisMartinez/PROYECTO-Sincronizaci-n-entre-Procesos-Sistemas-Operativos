@@ -129,7 +129,7 @@ typedef struct {
 
 typedef struct {
     int presion_actual[NUM_NODOS];    // Simulación de presión
-    int caudal_actual[NUM_NODOS];      // Simulación de caudal, (cantidad de agua flujendo dependiendo del estado del no, ocupado o libre)
+  //  int caudal_actual[NUM_NODOS];      // Simulación de caudal, (cantidad de agua flujendo dependiendo del estado del no, ocupado o libre)
     int alertas_activas;
     //char dashboard[2048]; // guardar todo antes de mostrar cada cierto tiempo, (opcional)
     sem_t mutex_monitor;  

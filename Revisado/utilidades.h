@@ -28,6 +28,33 @@ void limpiar_cola(ColaSolicitudes* cola){
     sem_init(&cola->vacio,0,0);
 }
 
+//liberar nodos,paara contrl del dia
+void liberar_nodos(SistemaEcoFlow* sistema){
+
+     for(int i=0; i<TOTAL_HORAS; i++){
+            sem_wait(&sistema->bloques[i].escritor);
+            for(int h=0; h<NUM_NODOS; h++){
+                //liberar
+                sistema->bloques[i].usuarios_en_nodo[h] = -1;
+            }
+            sem_post(&sistema->bloques[i].escritor);
+        }
+}
+
+//liberar consumo, para control del dia
+void liberar_consumo(SistemaEcoFlow* sistema){
+
+     
+    for(int h=0; h<NUM_NODOS; h++){
+         
+        sem_wait(&sistema->nodos[h].mutex_consumo);
+
+        sistema->nodos[h].consumo_total_dia = 0;
+
+        sem_post(&sistema->nodos[h].mutex_consumo);
+    }
+}
+
 // GENERAR_PROBABILIDAD
 // Implementación de la Regla de Probabilidad (50% Reserva)
 void decidir_accion_usuario(Solicitud* solicitud) {
@@ -101,4 +128,20 @@ void validar_hora(int hora){
     }
 }
 
+const char *accion_a_string(TipoAccion accion){
+
+    switch (accion){
+
+    case ACCION_RESERVA: return "RESERVA";
+    case ACCION_CONSUMO: return "CONSUMO";
+    case ACCION_CANCELACION: return "CANCELACION";
+    case ACCION_CONSULTA: return "CONSULTA";
+    case ACCION_PAGO: return "PAGO";
+        
+    break;
+    
+    default: return "DESCONOCIDO";
+    break;
+    }
+}
 #endif

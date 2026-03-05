@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include<unistd.h>
 #include "structuras.h"
 #include "utilidades.h"
 
@@ -7,10 +8,10 @@
 // ==================== FUNCIONES DE USUARIO ====================
 
 
-// RESERVAR NODO
-int reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora, int tipo_usuario) {
+// RESERVAR NODO // falta revision por preferencia de nodo no manejada
+void reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora /*, int tipo_usuario*/) {
 
-    if (hora < HORA_INICIO || hora >= HORA_FIN) return -1; 
+    if (hora < HORA_INICIO || hora >= HORA_FIN) return ; 
     
     int idx_hora = hora - HORA_INICIO;
     BloqueHorario* bloque = &sistema->bloques[idx_hora];
@@ -54,7 +55,7 @@ int reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora, int tipo_us
     }
     
     sem_post(&bloque->escritor);
-    return nodo_asignado;
+    
 }
 
 // CONSUMIR_AGUA
@@ -78,12 +79,10 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
 
     sem_post(&sistema->bloques[hora_actual].mutex_lectores);
 
-
     //verificacion de reservaa
     if(sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] == usuario_id){
 
         consumo_valido = 1;
-
     }
 
     //liberacion de lectores
@@ -94,9 +93,9 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
 
         //dar paso a los escritores
         sem_post(&sistema->bloques[hora_actual].escritor);
-
     }
     sem_post(&sistema->bloques[hora_actual].mutex_lectores);
+
 
     if(consumo_valido){
 
@@ -110,6 +109,7 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         //actualizacion de estadisticas mensual
         sem_wait(&sistema->mutex_estadisticas);
         sistema->total_metros_cubicos += litros / 1000;
+
 
         //clasificacion de consumo, (critico > 500 litros)
         if(litros > CONSUMO_CRITICO_LIMITE){
@@ -143,7 +143,10 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
 }
 
 // CANCELAR_RESERVA
-int cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
+void cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
+
+    int cancelado =0;
+    //validar_hora(hora); //en saso de que se agg una bloque horario
     for (int h = 0; h < TOTAL_HORAS; h++) {
         BloqueHorario* bloque = &sistema->bloques[h];
         
@@ -163,24 +166,27 @@ int cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
                 sem_post(&sistema->nodos[i].mutex_nodo);
                 
                 printf("[SISTEMA] Usuario %d -> Cancelación exitosa Nodo %d\n", id_usuario, i);
-                sem_post(&bloque->escritor);
-                return 1;
-            }else{
-                sistema->total_amonestaciones++;
+                cancelado =1;
+                break;; 
             }
         }
         sem_post(&bloque->escritor);
     }
     
-    // Lógica de penalización (Fuera de sección crítica de bloques)
+    if(!cancelado){
 
-    //// FALTA HACER REGISTRAR AMONESTACION
-    //registrar_amonestacion(sistema, id_usuario);
-    printf("[ALERTA] Usuario %d -> Amonestado por cancelación inválida\n", id_usuario);
-    return 0;
+        //actualizar estadisticas de amonestaciones
+        sem_wait(&sistema->mutex_estadisticas);
+        sistema->total_amonestaciones ++;
+        sem_post(&sistema->mutex_estadisticas);
+        printf("[ALERTA] Usuario %d -> Amonestado por cancelación inválida\n", id_usuario);
+        
+    }
+
+    
 }
 
-// CONSULTAR_PRESION
+// CONSULTAR_PRESION // falta revision como trabajaremos la presion 
 void consultar_presion(SistemaEcoFlow* sistema, int hora) {
     BloqueHorario* bloque = &sistema->bloques[hora - HORA_INICIO];
 
@@ -192,10 +198,15 @@ void consultar_presion(SistemaEcoFlow* sistema, int hora) {
     }
     sem_post(&bloque->mutex_lectores);
 
+    //MEJORAR
+    //---------------------------------------------------------------------------------------------------------
     // SECCIÓN CRÍTICA DE LECTURA (Simultánea)
     printf("[LECTOR] Usuario consultando presión en bloque %d:00... OK\n", hora);
     usleep(100000); // Simula el tiempo de la comunicación inalámbrica
 
+    //---------------------------------------------------------------------------------------------------------
+
+    
     // Salida del Lector
     sem_wait(&bloque->mutex_lectores);
     bloque->lectores_activos--;
