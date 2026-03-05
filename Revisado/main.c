@@ -10,4 +10,6 @@ int main(){
     inicializar_sistema_ecoflow(&sistema);
 
     return 0;
+
+
 }

@@ -1,7 +1,7 @@
 #ifndef PROCESO_HILO_H
 #define PROCESO_HILO_H
-#include"utilidades.h"
 #include<unistd.h>
+#include"utilidades.h"
 #include"structuras.h"
 #include"user_process.h"
 
@@ -35,27 +35,26 @@ void procesar_solicitudes(void* arg){
         //mostrar la solicitud a procesar
         printf("Procesando: Usuario %d - %s para %d:00\n",solicit.id_usuario,accion_a_string(solicit.accion),solicit.hora_solicitada);
 
-/*
+
         //Ejecutar la accion del usuario
         switch (solicit.accion){
 
         case ACCION_RESERVA: reservar_nodo(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.tipo_usuario);//flata nodo preferido
-
+             break;
         case ACCION_CONSUMO: consumir_agua(sistema,solicit.id_usuario,solicit.nodo_preferido,solicit.hora_solicitada,solicit.litros_consumir,solicit.tipo_usuario);
-
+             break;
         case ACCION_CANCELACION: cancelar_reserva(sistema,solicit.hora_solicitada) ;
-
+             break;
         case ACCION_CONSULTA: consultar_presion(sistema,solicit.hora_solicitada) ;
-
+             break;
         case ACCION_PAGO: pagar_excedente(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.nodo_preferido);
-            
-        break;
+             break;
         
         default: printf("Accion desconocida %s\n",accion_a_string(solicit.accion));
         break;
-        } */
+        } 
 
-      //  usleep(50000); //0.05 segundos 
+        usleep(50000); //0.05 segundos 
     }
 
 

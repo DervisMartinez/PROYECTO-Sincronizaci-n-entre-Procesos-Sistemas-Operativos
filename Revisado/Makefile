@@ -7,7 +7,7 @@ TARGET = ECOFOLOW
 # Compilador utilazado, por ej, icc, pgcc, gcc
 CC = gcc
 # Banderas del compilador, por rj -DDEBUG - 02 - 03 -wall -g
-CFLAGS = -Wall -Wextra -std=c99 -pthread
+CFLAGS = -Wall -Wextra -std=c99 -pthread -D_POSIX_C_SOURCE=200112L
 
 # Palabras que usa el Makefile que podrian ser el nombre de un Programa
 .PHONY: default all clean
