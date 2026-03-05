@@ -1,8 +1,8 @@
 #ifndef PROCESO_HILO_H
 #define PROCESO_HILO_H
+#include"utilidades.h"
 #include<unistd.h>
 #include"structuras.h"
-#include"utilidades.h"
 #include"user_process.h"
 
 

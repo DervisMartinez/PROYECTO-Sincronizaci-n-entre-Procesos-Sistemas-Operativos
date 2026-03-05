@@ -23,15 +23,16 @@ HEADERS = $(wildcard *.h)
 # $< es el primer prerrequisito, generalmente en archivofuente
 # $@ nombre del archivo que se esta generando, archivo objeto
 %.o: %.c $(HEADERS)
-		$(CC) $(CFLAGS) -c $< -o $@
+		@$(CC) $(CFLAGS) -c $< -o $@
 #preserva archivos intermedios
 .PRECIOUS: $(TARGET) $(OBJECTS)
 # enlaza objetos y crea el ejecutable
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LIBS) -o $@
+	@$(CC) $(OBJECTS) $(LIBS) -o $@
+	@echo "Programa compilado exitosamente"
 # borra archivos .o
 clean:
 		-rm -f *.o core
 # borra archivos .o y el ejecutable
 cleanall: clean
-		-rm -f $(TARGET)
+	@	-rm -f $(TARGET)
