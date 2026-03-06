@@ -8,6 +8,7 @@ void inicializar_nodos(SistemaEcoFlow* sistema){
 
         sistema->nodos[i].id_nodo = i+1;
         sistema->nodos[i].reservado = 0;
+        sistema->nodos[i].tipo_User = -1;
         sistema->nodos[i].usuario_actual = -1;
         sistema->nodos[i].hora_reserva = 0;
         sistema->nodos[i].consumo_total_dia = 0;

@@ -7,11 +7,11 @@
 
 
 
-void procesar_solicitudes(void* arg){
+void* procesar_solicitudes(void* arg){
     SistemaEcoFlow* sistema =(SistemaEcoFlow*)arg;
 
-    printf("PROCESADOR DE SOLISITUD INICIADO\n");
-    printf("consumiendo solicitud de la cola\n");
+    printf("\nPROCESADOR DE SOLISITUD INICIADO\n");
+    printf("\nconsumiendo solicitud de la cola\n\n");
 
     while(sistema->simulacion_activa){
         
@@ -33,7 +33,7 @@ void procesar_solicitudes(void* arg){
         sem_post(&sistema->cola_solicitudes.lleno);
 
         //mostrar la solicitud a procesar
-        printf("Procesando: Usuario %d - %s para %d:00\n",solicit.id_usuario,accion_a_string(solicit.accion),solicit.hora_solicitada);
+        printf("Procesando: Usuario %d - %s para %d:00\n\n",solicit.id_usuario,accion_a_string(solicit.accion),solicit.hora_solicitada);
 
 
         //Ejecutar la accion del usuario
@@ -43,7 +43,7 @@ void procesar_solicitudes(void* arg){
              break;
         case ACCION_CONSUMO: consumir_agua(sistema,solicit.id_usuario,solicit.nodo_preferido,solicit.hora_solicitada,solicit.litros_consumir,solicit.tipo_usuario);
              break;
-        case ACCION_CANCELACION: cancelar_reserva(sistema,solicit.hora_solicitada) ;
+        case ACCION_CANCELACION: cancelar_reserva(sistema,solicit.id_usuario) ;
              break;
         case ACCION_CONSULTA: consultar_presion(sistema,solicit.hora_solicitada) ;
              break;
@@ -58,52 +58,56 @@ void procesar_solicitudes(void* arg){
     }
 
 
-    printf("Procesador de solicitudes finalizado\n");
+    printf("\nProcesador de solicitudes finalizado\n");
 
+     return NULL;
 }
 
-void poceso_monitor(void*arg){
+void* proceso_monitor(void*arg){
 
     SistemaEcoFlow* sistema = (SistemaEcoFlow*)arg;
 
     while (sistema->simulacion_activa) {
         
-        sleep(3);
+        sleep(10);
 
         //bloqueo de seccion critica
         sem_wait(&sistema->monitor.mutex_monitor);
 
-        printf("MONITOR DE PRESION\n");
+        printf("\nMONITOR DE PRESION\n");
 
         for(int i=0; i<NUM_NODOS; i++){
 
-            printf("NODO %d: Presion %3d psi %s",i+1,sistema->monitor.presion_actual[i],sistema->nodos[i].reservado?"OCUPADO":"LIBRE");
+            printf("NODO %d: Presion %3d psi %s\n",i+1,sistema->monitor.presion_actual[i],sistema->nodos[i].reservado?"OCUPADO":"LIBRE");
         }
 
         //estadisticas
             printf("Solicitudes: %3d/%-3d \n",sistema->solicitudes_dia_actual,MAX_SOLICITUDES_DIA);
-            printf("Eficiencia: %.1f",sistema->auditor.eficiencia_global);
+            printf("Eficiencia: %.1f\n\n",sistema->auditor.eficiencia_global);
 
         //liberacion de recurso
         sem_post(&sistema->monitor.mutex_monitor);
 
     }
+     return NULL;
 }
 
-void control_dia (void*arg){
+void* control_dia (void*arg){
 
     SistemaEcoFlow* sistema = (SistemaEcoFlow*)arg;
 
+    printf("\n");
     printf("CONTROLADOR DE DIA\n");
+    printf("\n");
 
     //mistras no culminen los 30 dias
     while (sistema->dia_actual <=DIAS_SIMULACION){
         
-        printf("DIA %d - INICIO (6:00 AM)\n",sistema->dia_actual);
+        printf("DIA %d - INICIO (6:00 AM)\n\n",sistema->dia_actual);
         sleep(12); //12 segundos = 1 dia de simulacion (12 horas operando)
-        printf("DIA %d -FIN (6:00 PM)\n",sistema->dia_actual);
+        printf("DIA %d -FIN (6:00 PM)\n\n",sistema->dia_actual);
 
-        printf("Procesando ultimas solicitudes\n");
+        printf("Procesando ultimas solicitudes\n\n");
         while (sistema->cola_solicitudes.count>0) {
             sleep(1);
         }
@@ -131,20 +135,179 @@ void control_dia (void*arg){
     
     printf("SIMULACION COMPLETADA. %d dias transcurridos\n",DIAS_SIMULACION);
     sistema->simulacion_activa =0;
+
+     return NULL;
 }
 
-/*
-//faltante 
-void proceso_auditor(void*arg){
+void* proceso_auditor(void* arg) {
 
+    SistemaEcoFlow* sistema = (SistemaEcoFlow*)arg;
+    
+    printf("\n\nAUDITOR DE FLUJO iniciado\n");
+    printf("\nSupervisando consumos críticos (>%dL)\n", CONSUMO_CRITICO_LIMITE);
+    
+    int consumos_por_hora[TOTAL_HORAS] = {0};
+    
+    while(sistema->simulacion_activa) {
+        
+        // ESPERAR NOTIFICACIÓN DE CONSUMO CRÍTICO 
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += 15;  // Revisar cada 15 segundos
+        
+        //esprea a que llegue la senal o se agoten los 15 segundos, si llega senal retorna 0, sino retorna -1
+        int notificado = sem_timedwait(&sistema->auditor.mutex_auditoria, &ts);
+        
+        if(notificado == 0) {
+            printf("\nAUDITOR: Validando consumos críticos pendientes...\n");
+            
+            for(int n = 0; n < NUM_NODOS; n++) {
+                //bloquear recurso compartido,"consumo de cada nodo"
+                sem_wait(&sistema->nodos[n].mutex_consumo);
+                
+                if(sistema->nodos[n].consumo_total_dia > CONSUMO_CRITICO_LIMITE) {
+                    
+                    // Determinar si está justificado (industrial = más probable)
+                    int es_industrial = (sistema->nodos[n].tipo_User == 1);
+                   // int id_usuario = sistema->nodos[n].usuario_actual;
+                   
 
+                    //determinar la probabilidad de justificacion
+                    int justificado = 0;
+                    
+                    if(es_industrial) {
+                        // Industriales tienen 85% de probabilidad de justificación
+                        justificado = (rand() % 100) < 85;
+                    } else {
+                        // Residenciales solo 55% (emergencias reales)
+                        justificado = (rand() % 100) < 55;
+                    }
+                    
+                    if(justificado) {
+                        sistema->auditor.consumos_criticos_validados++;
+                        printf("NODO %d: Consumo crítico VALIDADO (justificado)\n", n+1);
+                    } else {
+                        sistema->auditor.consumos_criticos_no_justificados++;
+                        sistema->auditor.multas_generadas++;
+                        printf("NODO %d: Consumo crítico NO JUSTIFICADO - MULTA\n", n+1);
+                    }
+                    
+                    // Registrar consumo por hora (para estadística)
+                    int hora = sistema->nodos[n].hora_reserva;
+                    if(hora >= HORA_INICIO && hora < HORA_FIN) {
+                        consumos_por_hora[hora - HORA_INICIO]++;
+                    }
+                }
+                
+                sem_post(&sistema->nodos[n].mutex_consumo);
+            }
+        }
+        
+
+        // CALCULAR CONSUMO POR HORA
+        printf("\nAUDITOR: Consumo por hora:\n");
+        for(int h = 0; h < TOTAL_HORAS; h++) {
+            printf("   %d:00 - %d litros\n", HORA_INICIO + h, consumos_por_hora[h] * 100);
+        }
+        
+        //CALCULAR EFICIENCIA (nodos ocupados vs tiempo espera) 
+        int nodos_ocupados = 0;
+        int tiempo_espera_total = 0;
+        int muestras = 0;
+        
+        for(int h = 0; h < TOTAL_HORAS; h++) {
+            for(int n = 0; n < NUM_NODOS; n++) {
+
+                if(sistema->bloques[h].usuarios_en_nodo[n] != -1) {
+                    nodos_ocupados++;
+                    // Simular tiempo de espera (mayor si muchos nodos ocupados)
+                    tiempo_espera_total += 5 + (nodos_ocupados );
+                    muestras++;
+                }
+            }
+        }
+
+        
+        float eficiencia = 0;
+        if(muestras > 0) {
+            eficiencia = (nodos_ocupados * 100.0f) / (TOTAL_HORAS * NUM_NODOS);
+            sistema->auditor.eficiencia_global = eficiencia;
+            sistema->auditor.tiempo_espera_promedio = tiempo_espera_total / muestras;
+            sistema->auditor.nodos_ocupados_promedio = (nodos_ocupados * 100) / (TOTAL_HORAS * NUM_NODOS);
+        }
+        
+        printf("AUDITOR: Eficiencia = %.1f%% | Espera promedio = %d min \n\n", 
+               eficiencia, sistema->auditor.tiempo_espera_promedio);
+        
+        usleep(50000);
+    }
+    
+    //  REPORTE FINAL -- revisar o agg al reporte mensual dentro de utilidades 
+    printf("\nAUDITOR - REPORTE MENSUAL:\n");
+    printf("   Consumos críticos validados: %d\n", sistema->auditor.consumos_criticos_validados);
+    printf("   Consumos no justificados: %d\n", sistema->auditor.consumos_criticos_no_justificados);
+    printf("   Multas generadas: %d\n", sistema->auditor.multas_generadas);
+    printf("   Eficiencia promedio: %.1f%%\n", sistema->auditor.eficiencia_global);
+    
+    return NULL;
 }
 
-//faltante
-void proceso_usuario(void*arg){
-
-
+void* proceso_usuario(void* arg) {
+    UsuarioThreadData* data = (UsuarioThreadData*)arg;
+    SistemaEcoFlow* sistema = data->sistema;
+    
+    while(sistema->simulacion_activa && sistema->dia_actual <= DIAS_SIMULACION) {
+        
+        // Verificar límite diario de solicitudes
+        if(sistema->solicitudes_dia_actual >= MAX_SOLICITUDES_DIA) {
+            usleep(100000);
+            continue;
+        }
+        
+        // Crear nueva solicitud
+        Solicitud sol;
+        sol.id_usuario = data->stats.id_usuario;
+        sol.tipo_usuario = data->stats.tipo;
+        sol.hora_solicitada = HORA_INICIO + (rand() % TOTAL_HORAS);
+        sol.nodo_preferido = rand() % NUM_NODOS;  // Nodo aleatorio como preferido
+        sol.timestamp = time(NULL);
+        
+        // Decidir acción según probabilidades
+        decidir_accion_usuario(&sol);
+        
+        // Si es consumo, definir litros según tipo
+        if(sol.accion == ACCION_CONSUMO) {
+            if(data->stats.tipo == 0) {
+                sol.litros_consumir = 100 + (rand() % 300);  // Residencial: 100-400L
+            } else {
+                sol.litros_consumir = 200 + (rand() % 800);  // Industrial: 200-999L
+            }
+        }
+        
+        // Encolar solicitud (productor)
+        sem_wait(&sistema->cola_solicitudes.lleno);
+        sem_wait(&sistema->cola_solicitudes.mutex_cola);
+        
+        sistema->cola_solicitudes.solicitudes[sistema->cola_solicitudes.final] = sol;
+        sistema->cola_solicitudes.final = (sistema->cola_solicitudes.final + 1) % MAX_SOLICITUDES_DIA;
+        sistema->cola_solicitudes.count++;
+        
+        sem_post(&sistema->cola_solicitudes.mutex_cola);
+        sem_post(&sistema->cola_solicitudes.vacio);
+        
+        // Actualizar contador de solicitudes del día
+        sem_wait(&sistema->mutex_global);
+        sistema->solicitudes_dia_actual++;
+        sem_post(&sistema->mutex_global);
+        
+        // Actualizar estadísticas del usuario
+        data->stats.solicitudes_realizadas++;
+        
+        // Pequeña pausa entre solicitudes
+        usleep(rand() % 300000);
+    }
+    
+    return NULL;
 }
-*/
 
 #endif //PROCESO_HILO_H

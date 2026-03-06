@@ -45,6 +45,7 @@ typedef enum {
 typedef struct {
     int id_nodo;                  // identificador
     int reservado;               // 0=libre, 1=reservado  (no es estrictamente necesario, luego evaluamos si quitarlo)
+    int tipo_User;
     int usuario_actual;           // ID del usuario que lo reservó (-1 si libre)
     int hora_reserva;             // Hora para la que está reservado
     int consumo_total_dia;         // Litros consumidos en el día

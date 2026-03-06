@@ -8,8 +8,8 @@
 // ==================== FUNCIONES DE USUARIO ====================
 
 
-// RESERVAR NODO // falta revision por preferencia de nodo no manejada
-void reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora /*, int tipo_usuario*/) {
+// RESERVAR NODO 
+void reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora , int tipo_usuario, int nodo_preferido) {
 
     if (hora < HORA_INICIO || hora >= HORA_FIN) return ; 
     
@@ -20,13 +20,25 @@ void reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora /*, int tip
     sem_wait(&bloque->escritor); 
     
     int nodo_asignado = -1;
-    for (int i = 0; i < NUM_NODOS; i++) {
-        if (bloque->usuarios_en_nodo[i] == -1) {
-            nodo_asignado = i;
-            break;
+
+    if(nodo_preferido != -1){
+
+        if(nodo_preferido >=0 && nodo_preferido <NUM_NODOS){
+
+            if(bloque->usuarios_en_nodo[nodo_preferido]== -1){ nodo_asignado = nodo_preferido;}
         }
+
+    }else{
+
+        for (int i = 0; i < NUM_NODOS; i++) {
+            if (bloque->usuarios_en_nodo[i] == -1) {
+                nodo_asignado = i;
+                break;
+            }
+        }
+
     }
-    
+
     if (nodo_asignado != -1) {
         // Actualizar estado en el bloque horario
         bloque->usuarios_en_nodo[nodo_asignado] = id_usuario;
@@ -35,6 +47,7 @@ void reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora /*, int tip
         // Sincronizar actualización en la estructura del nodo específico
         sem_wait(&sistema->nodos[nodo_asignado].mutex_nodo);
         sistema->nodos[nodo_asignado].reservado = 1;
+        sistema->nodos[nodo_asignado].tipo_User = tipo_usuario;
         sistema->nodos[nodo_asignado].usuario_actual = id_usuario;
         sistema->nodos[nodo_asignado].hora_reserva = hora;
         sistema->nodos[nodo_asignado].veces_reservado++;
@@ -160,6 +173,7 @@ void cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
                 // Liberar en la estructura del nodo
                 sem_wait(&sistema->nodos[i].mutex_nodo);
                 sistema->nodos[i].reservado = 0;
+                sistema->nodos[i].tipo_User = -1;
                 sistema->nodos[i].usuario_actual = -1;
                 sistema->nodos[i].hora_reserva = -1;
                 sistema->nodos[i].ultima_modificacion = time(NULL);
@@ -237,8 +251,12 @@ void pagar_excedente (SistemaEcoFlow* sistema,int usuario_id, int hora, int nodo
 
         //liberacion del nodo
         sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] = -1;
+        
         sistema->nodos[nodo_id].reservado = 0;
         sistema->nodos[nodo_id].usuario_actual = -1;
+        sistema->nodos[nodo_id].tipo_User = -1;
+        sistema->nodos[nodo_id].hora_reserva = -1;
+        sistema->nodos[nodo_id].ultima_modificacion= time(NULL);
 
     }else{
 

@@ -31,9 +31,21 @@ void limpiar_cola(ColaSolicitudes* cola){
 void liberar_nodos(SistemaEcoFlow* sistema){
 
      for(int i=0; i<TOTAL_HORAS; i++){
+
             sem_wait(&sistema->bloques[i].escritor);
             for(int h=0; h<NUM_NODOS; h++){
-                //liberar
+                 
+                //liberar nodo fisico
+                sem_wait(&sistema->nodos[h].mutex_nodo);
+
+                sistema->nodos[h].reservado = 0;
+                sistema->nodos[h].usuario_actual = -1;
+                sistema->nodos[h].tipo_User = -1;
+                sistema->nodos[h].hora_reserva = -1;
+                sistema->nodos[h].ultima_modificacion = time(NULL);
+                sem_post(&sistema->nodos[h].mutex_nodo);     
+                
+                //liberar bloques
                 sistema->bloques[i].usuarios_en_nodo[h] = -1;
             }
             sem_post(&sistema->bloques[i].escritor);
