@@ -59,12 +59,12 @@ void reservar_nodo(SistemaEcoFlow* sistema, int id_usuario, int hora , int tipo_
         sistema->total_reservas_exitosas++;
         sem_post(&sistema->mutex_estadisticas);
         
-        printf("[SISTEMA] Usuario %d -> Reserva Nodo %d (%d:00)\n", id_usuario, nodo_asignado, hora);
+        printf("[SISTEMA] Usuario %d -> Reserva Nodo %d (%d:00)\n\n", id_usuario, nodo_asignado, hora);
     } else {
         sem_wait(&sistema->mutex_estadisticas);
         sistema->total_reservas_fallidas++;
         sem_post(&sistema->mutex_estadisticas);
-        printf("[SISTEMA] Sin disponibilidad para Usuario %d a las %d:00\n", id_usuario, hora);
+        printf("[SISTEMA] Sin disponibilidad para Usuario %d a las %d:00\n\n", id_usuario, hora);
     }
     
     sem_post(&bloque->escritor);
@@ -132,7 +132,7 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
             //notificando al auditor por exceso
             sem_post(&sistema->auditor.mutex_auditoria);
 
-            printf("CONSUMO CRITICO %d litros - Auditor notificado\n",litros);
+            printf("\nCONSUMO CRITICO %d litros - Auditor notificado\n",litros);
 
         }else{
 
@@ -142,13 +142,13 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         sem_post(&sistema->mutex_estadisticas);
 
         //mostrar consumo realizado
-        printf("%s %d consumio %d litros en NODO %d (%d:00)\n",tipo_usuario== 0? "Residencial":"Industrial",usuario_id,litros,nodo_id,hora);
+        printf("[CONSUMO] %s %d consumio %d litros en NODO %d (%d:00)\n\n",tipo_usuario== 0? "Residencial":"Industrial",usuario_id,litros,nodo_id,hora);
 
         //liberar mutex de consumo
         sem_post(&sistema->nodos[nodo_id].mutex_consumo);
     }else{
 
-        printf("EL usuario %d No tiene reserca en el NODO %d para %d:00\n", usuario_id, nodo_id, hora);
+        printf("[CONSUMO FALLIDO] EL usuario %d No tiene reserca en el NODO %d para %d:00\n\n", usuario_id, nodo_id, hora);
         sem_post(&sistema->nodos[nodo_id].mutex_consumo);
 
     }
@@ -179,7 +179,7 @@ void cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
                 sistema->nodos[i].ultima_modificacion = time(NULL);
                 sem_post(&sistema->nodos[i].mutex_nodo);
                 
-                printf("[SISTEMA] Usuario %d -> Cancelación exitosa Nodo %d\n", id_usuario, i);
+                printf("[SISTEMA] Usuario %d -> Cancelación exitosa Nodo %d\n\n", id_usuario, i);
                 cancelado =1;
                 break;; 
             }
@@ -193,7 +193,7 @@ void cancelar_reserva(SistemaEcoFlow* sistema, int id_usuario) {
         sem_wait(&sistema->mutex_estadisticas);
         sistema->total_amonestaciones ++;
         sem_post(&sistema->mutex_estadisticas);
-        printf("[ALERTA] Usuario %d -> Amonestado por cancelación inválida\n", id_usuario);
+        printf("[ALERTA] Usuario %d -> Amonestado por cancelación inválida\n\n", id_usuario);
         
     }
 
@@ -215,7 +215,7 @@ void consultar_presion(SistemaEcoFlow* sistema, int hora) {
     //MEJORAR
     //---------------------------------------------------------------------------------------------------------
     // SECCIÓN CRÍTICA DE LECTURA (Simultánea)
-    printf("[LECTOR] Usuario consultando presión en bloque %d:00... OK\n", hora);
+    printf("[CONSULTA] Usuario consultando presión en bloque %d:00... OK\n\n", hora);
     usleep(100000); // Simula el tiempo de la comunicación inalámbrica
 
     //---------------------------------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ void pagar_excedente (SistemaEcoFlow* sistema,int usuario_id, int hora, int nodo
     if(sistema->nodos[nodo_id].usuario_actual == usuario_id && sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] ==usuario_id){
 
         //registrar el pago
-        printf("Usuario %d pago el excedente por NODO %d (%d:00)\n",usuario_id,nodo_id,hora);
+        printf("[PAGO] Usuario %d pago el excedente por NODO %d (%d:00)\n\n",usuario_id,nodo_id,hora);
 
         //liberacion del nodo
         sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] = -1;
@@ -260,7 +260,7 @@ void pagar_excedente (SistemaEcoFlow* sistema,int usuario_id, int hora, int nodo
 
     }else{
 
-        printf("El usuario %d no tiene reserva en NODO %d para %d:00\n",usuario_id,nodo_id,hora);
+        printf("[PAGO] El usuario %d no tiene reserva en NODO %d para %d:00\n\n",usuario_id,nodo_id,hora);
     }
 
     sem_post(&sistema->bloques[hora_actual].escritor);

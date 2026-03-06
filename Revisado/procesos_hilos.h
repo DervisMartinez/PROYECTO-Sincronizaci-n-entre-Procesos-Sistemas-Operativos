@@ -33,7 +33,7 @@ void* procesar_solicitudes(void* arg){
         sem_post(&sistema->cola_solicitudes.lleno);
 
         //mostrar la solicitud a procesar
-        printf("Procesando: Usuario %d - %s para %d:00\n\n",solicit.id_usuario,accion_a_string(solicit.accion),solicit.hora_solicitada);
+        printf("Procesando: Usuario %d - %s para %d:00\n",solicit.id_usuario,accion_a_string(solicit.accion),solicit.hora_solicitada);
 
 
         //Ejecutar la accion del usuario
