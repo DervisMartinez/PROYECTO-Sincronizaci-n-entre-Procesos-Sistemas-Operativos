@@ -68,7 +68,13 @@ void inicializar_sistema(SistemaEcoFlow* sistema){
     sistema->auditor.eficiencia_global = 0.0;
     sistema->auditor.nodos_ocupados_promedio = 0;
     sistema->auditor.tiempo_espera_promedio = 0;
-    sem_init(&sistema->auditor.mutex_auditoria,0,0);
+
+    for(int i=1; i<TOTAL_HORAS; i++){
+        sistema->auditor.consumo_critico_por_hora[i] = 0;
+        sistema->auditor.consumo_por_hora[i] = 0;
+    }
+    
+    sem_init(&sistema->auditor.mutex_auditoria,0,1);
 
     //inicializar monitor---------------------------------------------------
     for(int i=0; i<NUM_NODOS; i++){

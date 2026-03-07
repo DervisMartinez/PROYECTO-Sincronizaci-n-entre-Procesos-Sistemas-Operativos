@@ -1,30 +1,41 @@
 #include "utilidades.h"
 #include<stdio.h>
 
-//// FALTA HACER REGISTRAR AMONESTACION
-//// FALTA HACER REGISTRAR AMONESTACION
-//// FALTA HACER REGISTRAR AMONESTACION
-//// FALTA HACER REGISTRAR AMONESTACION
-//// FALTA HACER REGISTRAR AMONESTACION
 
-//procedimiento utilizado para limpiar la cola de solicitudes al final de cada dia.
-// LIMPIAR_COLA
 void limpiar_cola(ColaSolicitudes* cola){
-
+    // Bloquear mutex para asegurar exclusión durante la limpieza
+    sem_wait(&cola->mutex_cola);
+    
+    // Reiniciar índices de la cola circular
     cola->frente = 0;
     cola->final = 0; 
     cola->count = 0;
-
-    //volver a activar el semaforo de exclusion mutua
+    
+   
+    
+    // Reiniciar semáforo 'lleno' a MAX_SOLICITUDES_DIA
+    // Primero consumimos todos los posts pendientes
+    int valor_actual;
+    sem_getvalue(&cola->lleno, &valor_actual);
+    for(int i = 0; i < valor_actual; i++) {
+        sem_trywait(&cola->lleno);  // Consume sin bloquear
+    }
+    // Ahora lleno está en 0, lo llevamos a MAX_SOLICITUDES_DIA
+    for(int i = 0; i < MAX_SOLICITUDES_DIA; i++) {
+        sem_post(&cola->lleno);
+    }
+    
+    // Reiniciar semáforo 'vacio' a 0
+    sem_getvalue(&cola->vacio, &valor_actual);
+    for(int i = 0; i < valor_actual; i++) {
+        sem_trywait(&cola->vacio);  // Consume todos los posts
+    }
+    // vacio ahora está en 0 (valor inicial correcto)
+    
+    // Liberar mutex
     sem_post(&cola->mutex_cola);
-
-    //destruir semaforos de productoor consumidor
-    sem_destroy(&cola->lleno);
-    sem_destroy(&cola->vacio);
-
-    //crear de nuevo los semaforos, creo que es mejor asi que intentar limpiarllos
-    sem_init(&cola->lleno,0,MAX_SOLICITUDES_DIA);
-    sem_init(&cola->vacio,0,0);
+    
+    printf("[SISTEMA] Cola limpiada correctamente\n");
 }
 
 //liberar nodos,paara contrl del dia

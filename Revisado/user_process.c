@@ -116,6 +116,7 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         sem_wait(&sistema->nodos[nodo_id].mutex_consumo);
 
         //actualizacion de consumo
+
         sistema->nodos[nodo_id].consumo_total_dia += litros;
         sistema->nodos[nodo_id].consumo_total_mes += litros;
 
@@ -123,11 +124,13 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         sem_wait(&sistema->mutex_estadisticas);
         sistema->total_metros_cubicos += litros / 1000;
 
+        sistema->auditor.consumo_por_hora[hora_actual] += litros;
 
         //clasificacion de consumo, (critico > 500 litros)
         if(litros > CONSUMO_CRITICO_LIMITE){
             
             sistema->total_consumos_criticos ++;
+            sistema->auditor.consumo_critico_por_hora[hora_actual] += litros;
 
             //notificando al auditor por exceso
             sem_post(&sistema->auditor.mutex_auditoria);

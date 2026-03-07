@@ -39,7 +39,7 @@ void* procesar_solicitudes(void* arg){
         //Ejecutar la accion del usuario
         switch (solicit.accion){
 
-        case ACCION_RESERVA: reservar_nodo(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.tipo_usuario);//flata nodo preferido
+        case ACCION_RESERVA: reservar_nodo(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.tipo_usuario,solicit.nodo_preferido);//flata nodo preferido
              break;
         case ACCION_CONSUMO: consumir_agua(sistema,solicit.id_usuario,solicit.nodo_preferido,solicit.hora_solicitada,solicit.litros_consumir,solicit.tipo_usuario);
              break;
@@ -98,7 +98,7 @@ void* control_dia (void*arg){
 
     printf("\n");
     printf("CONTROLADOR DE DIA\n");
-    printf("\n");
+    printf("   Simulando %d días\n\n", DIAS_SIMULACION);
 
     //mistras no culminen los 30 dias
     while (sistema->dia_actual <=DIAS_SIMULACION){
@@ -114,15 +114,19 @@ void* control_dia (void*arg){
 
 
         //limpiar cola para un nuevo dia
+        printf(" Limpiando cola de solicitudes...\n");
         limpiar_cola(&sistema->cola_solicitudes);
+        
 
         //reiniciar contador solicitudes
         sistema->solicitudes_dia_actual =0;
 
         //liberacion de nodos en cada bloque,seccion critica
+        printf("Liberando nodos...\n");
         liberar_nodos(sistema);
 
         //reiniciar consumo diario de los nodos, seccion critica
+        printf("Reiniciando consumo diario...\n");
         liberar_consumo(sistema);
 
         sistema->dia_actual ++;
@@ -145,8 +149,6 @@ void* proceso_auditor(void* arg) {
     
     printf("\n\nAUDITOR DE FLUJO iniciado\n");
     printf("\nSupervisando consumos críticos (>%dL)\n", CONSUMO_CRITICO_LIMITE);
-    
-    int consumos_por_hora[TOTAL_HORAS] = {0};
     
     while(sistema->simulacion_activa) {
         
@@ -192,11 +194,6 @@ void* proceso_auditor(void* arg) {
                         printf("NODO %d: Consumo crítico NO JUSTIFICADO - MULTA\n", n+1);
                     }
                     
-                    // Registrar consumo por hora (para estadística)
-                    int hora = sistema->nodos[n].hora_reserva;
-                    if(hora >= HORA_INICIO && hora < HORA_FIN) {
-                        consumos_por_hora[hora - HORA_INICIO]++;
-                    }
                 }
                 
                 sem_post(&sistema->nodos[n].mutex_consumo);
@@ -204,11 +201,33 @@ void* proceso_auditor(void* arg) {
         }
         
 
+
         // CALCULAR CONSUMO POR HORA
-        printf("\nAUDITOR: Consumo por hora:\n");
-        for(int h = 0; h < TOTAL_HORAS; h++) {
-            printf("   %d:00 - %d litros\n", HORA_INICIO + h, consumos_por_hora[h] * 100);
+
+        static int contador = 0;
+
+        if (contador %2 == 0 ){
+
+            printf("\nAUDITOR CONSUMO POR HORA\n");
+            printf("    HORA    |   LItro   |   CRITICOS    \n");
+            printf("----------------------------------------\n");
+
+            int total_litro=0;
+            int total_critico=0;
+
+            for(int i=0; i<TOTAL_HORAS; i++){
+
+                printf("    %2d:00  |%6d litros  |   %2d\n", HORA_INICIO + i, sistema->auditor.consumo_por_hora[i], sistema->auditor.consumo_critico_por_hora[i] );
+
+                total_litro += sistema->auditor.consumo_por_hora[i];
+                total_critico+= sistema->auditor.consumo_critico_por_hora[i];
+            }
+
+            printf("    TOTAL  | %dL  |   %d\n\n",total_litro,total_critico);
+
         }
+       
+            
         
         //CALCULAR EFICIENCIA (nodos ocupados vs tiempo espera) 
         int nodos_ocupados = 0;
@@ -242,13 +261,13 @@ void* proceso_auditor(void* arg) {
         usleep(50000);
     }
     
-    //  REPORTE FINAL -- revisar o agg al reporte mensual dentro de utilidades 
+    /* REPORTE FINAL -- revisar o agg al reporte mensual dentro de utilidades 
     printf("\nAUDITOR - REPORTE MENSUAL:\n");
     printf("   Consumos críticos validados: %d\n", sistema->auditor.consumos_criticos_validados);
     printf("   Consumos no justificados: %d\n", sistema->auditor.consumos_criticos_no_justificados);
     printf("   Multas generadas: %d\n", sistema->auditor.multas_generadas);
     printf("   Eficiencia promedio: %.1f%%\n", sistema->auditor.eficiencia_global);
-    
+    */
     return NULL;
 }
 
@@ -264,6 +283,8 @@ void* proceso_usuario(void* arg) {
             continue;
         }
         
+
+     
         // Crear nueva solicitud
         Solicitud sol;
         sol.id_usuario = data->stats.id_usuario;

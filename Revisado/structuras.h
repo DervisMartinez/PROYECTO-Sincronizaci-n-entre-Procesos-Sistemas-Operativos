@@ -51,7 +51,6 @@ typedef struct {
     int consumo_total_dia;         // Litros consumidos en el día
     int consumo_total_mes;         // Litros consumidos en el mes
     int veces_reservado;           // Contador de reservas
-
     // Semáforos para exclusión mutua
     sem_t mutex_nodo;             // Protege operaciones sobre el nodo, en saso de ser reservado
     sem_t mutex_consumo;           // Protege actualizaciones de consumo, pra el proceso consumir agua, primero se verifica que no este reservado
@@ -120,6 +119,9 @@ typedef struct {
     float eficiencia_global;
     int nodos_ocupados_promedio;
     int tiempo_espera_promedio;
+    //agg arreglos para el manejo de consumo por hora
+    int consumo_por_hora[TOTAL_HORAS];
+    int consumo_critico_por_hora[TOTAL_HORAS];
 
     sem_t mutex_auditoria; //usado para recibir la notificacion de consumo irregular
 } AuditorFlujo;
