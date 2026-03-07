@@ -13,15 +13,21 @@ int main() {
     SistemaEcoFlow sistema;
     inicializar_sistema_ecoflow(&sistema);
     
-    pthread_t hilo_auditor, hilo_monitor, hilo_dia, hilo_procesador;
-    pthread_t hilos_usuarios[NUM_USUARIOS];
+    pthread_t hilo_auditor, hilo_monitor, hilo_dia;
+    pthread_t hilo_procesador[NUM_PROCESADORES];  //consumidor
+    pthread_t hilos_usuarios[NUM_USUARIOS]; //productor
     UsuarioThreadData usuarios_data[NUM_USUARIOS];
     
     pthread_create(&hilo_auditor, NULL, proceso_auditor, &sistema);
     pthread_create(&hilo_monitor, NULL, proceso_monitor, &sistema);
     pthread_create(&hilo_dia, NULL, control_dia, &sistema);
-    pthread_create(&hilo_procesador, NULL, procesar_solicitudes, &sistema);
+
     
+    
+    for(int h=0; h<NUM_PROCESADORES; h++){
+       pthread_create(&hilo_procesador[h], NULL, procesar_solicitudes, &sistema); 
+    }
+
     for(int i = 0; i < NUM_USUARIOS; i++) {
         usuarios_data[i].stats.id_usuario = 1000 + i;
         usuarios_data[i].stats.tipo = (i < NUM_RESIDENCIALES) ? 0 : 1;
@@ -33,7 +39,11 @@ int main() {
     
     sistema.simulacion_activa = 0;
     
-    pthread_join(hilo_procesador, NULL);
+    
+    for(int h=0; h<NUM_PROCESADORES; h++){
+        pthread_join(hilo_procesador[h], NULL);
+    }
+
     for(int i = 0; i < NUM_USUARIOS; i++) {
         pthread_join(hilos_usuarios[i], NULL);
     }

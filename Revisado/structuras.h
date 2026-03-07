@@ -22,7 +22,7 @@
 #define NUM_USUARIOS 20              // Total de usuarios (puede ajustarse)
 #define NUM_RESIDENCIALES 12         // Cantidad de usuarios residenciales (ajustar segun la cantidad de usuarios en el sitema)
 #define NUM_INDUSTRIALES 8           // Cantidad de usuarios industriales (ajustar segun la cantidad de usuarios,la suma junto con NUM_RESIDENCIALES = NUM_USUARIOS)
-
+#define NUM_PROCESADORES 4
 // ============================================================================
 // TIPOS ENUMERADOS
 
