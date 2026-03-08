@@ -76,7 +76,7 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
 
     validar_hora(hora);
     int hora_actual = hora - HORA_INICIO;
-    int nodo_final = nodo_id;
+    int nodo_final = 0;
     int consumo_valido = 0;
 
     //verificar reserva del usuario en el nodo en la hora proporcionada
@@ -89,8 +89,9 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         sem_wait(&sistema->bloques[hora_actual].escritor);
     }
     sem_post(&sistema->bloques[hora_actual].mutex_lectores);
-    //verificacion de reservaa
 
+    
+    //verificacion de reservaa
     if (nodo_id == -1) { 
         for (int i = 0; i < NUM_NODOS; i++) {
             if (sistema->bloques[hora_actual].usuarios_en_nodo[i] == usuario_id) { 
@@ -103,8 +104,10 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         // Verificación estándar si se especificó un nodo 
         if (sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] == usuario_id) { 
             consumo_valido = 1;
+            nodo_final = nodo_id;
         }
     }
+
 
     //liberacion de lectores
     sem_wait(&sistema->bloques[hora_actual].mutex_lectores);
@@ -121,12 +124,12 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
     if(consumo_valido){
 
         //bloquear er recurso consumo dentro del nodo, exclusion mutua
-        sem_wait(&sistema->nodos[nodo_id].mutex_consumo);
+        sem_wait(&sistema->nodos[nodo_final].mutex_consumo);
 
         //actualizacion de consumo
 
-        sistema->nodos[nodo_id].consumo_total_dia += litros;
-        sistema->nodos[nodo_id].consumo_total_mes += litros;
+        sistema->nodos[nodo_final].consumo_total_dia += litros;
+        sistema->nodos[nodo_final].consumo_total_mes += litros;
 
         //actualizacion de estadisticas mensual
         sem_wait(&sistema->mutex_estadisticas);
@@ -153,16 +156,16 @@ void consumir_agua (SistemaEcoFlow* sistema, int usuario_id, int nodo_id, int ho
         sem_post(&sistema->mutex_estadisticas);
 
         //mostrar consumo realizado
-        printf("[CONSUMO] %s %d consumio %d litros en NODO %d (%d:00)\n\n",tipo_usuario== 0? "Residencial":"Industrial",usuario_id,litros,nodo_id + 1,hora);
+        printf("[CONSUMO] %s %d consumio %d litros en NODO %d (%d:00)\n\n",tipo_usuario== 0? "Residencial":"Industrial",usuario_id,litros,nodo_final+1,hora);
 
         //liberar mutex de consumo
-        sem_post(&sistema->nodos[nodo_id].mutex_consumo);
+        sem_post(&sistema->nodos[nodo_final].mutex_consumo);
     }else{
 
         if (nodo_id == -1) { 
             printf("[CONSUMO FALLIDO] El usuario %d no tiene NINGUNA reserva para las %d:00\n\n", usuario_id, hora); 
         } else { 
-            printf("[CONSUMO FALLIDO] El usuario %d no tiene reserva en el NODO %d para %d:00\n\n", usuario_id, nodo_id + 1, hora); 
+            printf("[CONSUMO FALLIDO] El usuario %d no tiene reserva en el NODO %d para %d:00\n\n", usuario_id, nodo_final+1, hora); 
         }
     }
 }
@@ -248,36 +251,53 @@ void pagar_excedente (SistemaEcoFlow* sistema,int usuario_id, int hora, int nodo
 
     validar_hora(hora);
 
+    int nodo_valido = -1;
     int hora_actual = hora - HORA_INICIO;
 
     //bloquear como escritor, en caso de que el nodo si este reservado por el usuario se paga para liberar lo que implica modificacion
     sem_wait(&sistema->bloques[hora_actual].escritor);
 
-    //bloquear el nodo en espesifico, para verificar que este reservado por el usuario y modificar si asi lo es 
-    sem_wait(&sistema->nodos[nodo_id].mutex_nodo);
-    
-    //revisar bien este condicional, posible verificacion doble
-    if(sistema->nodos[nodo_id].usuario_actual == usuario_id && sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] ==usuario_id){
 
-        //registrar el pago
-        printf("[PAGO] Usuario %d pago el excedente por NODO %d (%d:00)\n\n",usuario_id,nodo_id,hora);
+    if (nodo_id == -1){
 
-        //liberacion del nodo
-        sistema->bloques[hora_actual].usuarios_en_nodo[nodo_id] = -1;
-        
-        sistema->nodos[nodo_id].reservado = 0;
-        sistema->nodos[nodo_id].usuario_actual = -1;
-        sistema->nodos[nodo_id].tipo_User = -1;
-        sistema->nodos[nodo_id].hora_reserva = -1;
-        sistema->nodos[nodo_id].ultima_modificacion= time(NULL);
+        for(int i=0; i<NUM_NODOS; i++){
 
-    }else{
+            if(sistema->bloques[hora_actual].usuarios_en_nodo[i] == usuario_id){ nodo_valido = i; }
+            break;
+        }
+    }else{ nodo_valido = nodo_id;}
 
-        printf("[PAGO] El usuario %d no tiene reserva en NODO %d para %d:00\n\n",usuario_id,nodo_id,hora);
-    }
+    if(nodo_valido != -1){ 
+        //bloquear el nodo en espesifico, para verificar que este reservado por el usuario y modificar si asi lo es 
+        sem_wait(&sistema->nodos[nodo_valido].mutex_nodo);
+
+        //revisar bien este condicional, posible verificacion doble
+        if(sistema->nodos[nodo_valido].usuario_actual == usuario_id && sistema->bloques[hora_actual].usuarios_en_nodo[nodo_valido] ==usuario_id){
+
+            //registrar el pago
+            printf("[PAGO] Usuario %d pago el excedente por NODO %d (%d:00)\n\n",usuario_id,nodo_valido,hora);
+
+            //liberacion del nodo
+            sistema->bloques[hora_actual].usuarios_en_nodo[nodo_valido] = -1;
+            
+            sistema->nodos[nodo_valido].reservado = 0;
+            sistema->nodos[nodo_valido].usuario_actual = -1;
+            sistema->nodos[nodo_valido].tipo_User = -1;
+            sistema->nodos[nodo_valido].hora_reserva = -1;
+            sistema->nodos[nodo_valido].ultima_modificacion= time(NULL);
+
+        }else{
+
+            printf("[PAGO] El usuario %d no tiene reserva en NODO %d para %d:00\n\n",usuario_id,nodo_valido,hora);
+        }
+
+       
+        sem_post(&sistema->nodos[nodo_valido].mutex_nodo);
+
+     }else{ printf("[PAGO] El usuario %d no tiene reserva en ningun  NODO ",usuario_id);}
 
     sem_post(&sistema->bloques[hora_actual].escritor);
-    sem_post(&sistema->nodos[nodo_id].mutex_nodo);
+
 }
 
 

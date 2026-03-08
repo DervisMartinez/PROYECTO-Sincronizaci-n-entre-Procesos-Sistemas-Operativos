@@ -17,7 +17,7 @@
 #define HORA_FIN 18                  // 6:00 PM
 #define TOTAL_HORAS 12               // 6 a 17 (18 es cierre)
 #define MAX_SOLICITUDES_DIA 250      // Máximo de solicitudes por día de alta demanda
-#define DIAS_SIMULACION 30           // Un mes de simulación
+#define DIAS_SIMULACION 1          // Un mes de simulación
 #define CONSUMO_CRITICO_LIMITE 500   // Litros para considerar crítico
 #define NUM_USUARIOS 20              // Total de usuarios (puede ajustarse)
 #define NUM_RESIDENCIALES 12         // Cantidad de usuarios residenciales (ajustar segun la cantidad de usuarios en el sitema)

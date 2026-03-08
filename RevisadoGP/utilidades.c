@@ -131,6 +131,10 @@ void generar_reporte_mensual(SistemaEcoFlow* sistema) {
     printf("Amonestaciones Emitidas:  %d\n", sistema->total_amonestaciones); 
     printf("Consumos Críticos (Industria/Emerge): %d\n", sistema->total_consumos_criticos);
     printf("Consumos Estándar (Residencial):      %d\n", sistema->total_consumos_estandar);
+    printf("Consumo criticos validados: %d\n",sistema->auditor.consumos_criticos_validados);
+    printf("Consumo no justificados: %d\n",sistema->auditor.consumos_criticos_no_justificados);
+    printf("Multas generadas: %d\n",sistema->auditor.multas_generadas);
+
     
     float total = (float)sistema->total_reservas_exitosas + sistema->total_reservas_fallidas;
     float eficiencia = (total > 0) ? ((float)sistema->total_reservas_exitosas / total) * 100 : 0;

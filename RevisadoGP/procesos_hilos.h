@@ -261,13 +261,6 @@ void* proceso_auditor(void* arg) {
         usleep(50000);
     }
     
-    /* REPORTE FINAL -- revisar o agg al reporte mensual dentro de utilidades 
-    printf("\nAUDITOR - REPORTE MENSUAL:\n");
-    printf("   Consumos críticos validados: %d\n", sistema->auditor.consumos_criticos_validados);
-    printf("   Consumos no justificados: %d\n", sistema->auditor.consumos_criticos_no_justificados);
-    printf("   Multas generadas: %d\n", sistema->auditor.multas_generadas);
-    printf("   Eficiencia promedio: %.1f%%\n", sistema->auditor.eficiencia_global);
-    */
     return NULL;
 }
 
