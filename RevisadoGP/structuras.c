@@ -69,7 +69,7 @@ void inicializar_sistema(SistemaEcoFlow* sistema){
     sistema->auditor.nodos_ocupados_promedio = 0;
     sistema->auditor.tiempo_espera_promedio = 0;
 
-    for(int i=1; i<TOTAL_HORAS; i++){
+    for(int i=0; i<TOTAL_HORAS; i++){
         sistema->auditor.consumo_critico_por_hora[i] = 0;
         sistema->auditor.consumo_por_hora[i] = 0;
     }
