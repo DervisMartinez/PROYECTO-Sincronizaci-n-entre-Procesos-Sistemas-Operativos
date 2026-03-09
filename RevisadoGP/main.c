@@ -9,11 +9,19 @@
 
 
 int main() {
-    srand(time(NULL));
+    /*Inicializa el generador de números aleatorios usando la hora actual como semilla. 
+    Esto permite que los números aleatorios sean diferentes en cada ejecución.*/
+    srand(time(NULL)); 
     
     SistemaEcoFlow sistema;
     inicializar_sistema_ecoflow(&sistema);
     
+    /*
+    hilo_auditor: Supervisa consumos críticos
+    hilo_monitor: Muestra presión de nodos cada 10 segundos
+    hilo_dia: Controla el avance de los días
+    
+    */
     pthread_t hilo_auditor, hilo_monitor, hilo_dia;
     pthread_t hilo_procesador[NUM_PROCESADORES];
     pthread_t hilos_usuarios[NUM_USUARIOS];
@@ -51,6 +59,7 @@ int main() {
     for(int h = 0; h < NUM_PROCESADORES; h++) {
         pthread_join(hilo_procesador[h], NULL);
     }
+    //Crea MÚLTIPLES hilos procesadores (varios consumidores)
 
     //ESPERAR USUARIOS 
     for(int i = 0; i < NUM_USUARIOS; i++) {
@@ -67,7 +76,7 @@ int main() {
     generar_reporte_mensual(&sistema);
     limpiar_sistema(&sistema);
 
-    printf("\nFIN - Simulación terminada correctamente\n\n");
+    printf("\n FIN - Simulación terminada correctamente\n\n");
     
     return 0;
 }
