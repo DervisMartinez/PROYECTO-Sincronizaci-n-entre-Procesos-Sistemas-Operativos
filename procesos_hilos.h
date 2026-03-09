@@ -15,8 +15,8 @@ void* procesar_solicitudes(void* arg){
 
     while(sistema->simulacion_activa){
         
-        //esperar a que este una solicitud en la cola por lo menos
-        sem_wait(&sistema->cola_solicitudes.vacio);
+        //Se bloquea hasta que haya al menos UNA solicitud en la cola. El semáforo vacio cuenta cuántas solicitudes hay disponibles.
+        sem_wait(&sistema->cola_solicitudes.vacio); 
 
         //acceso esclusivo bloqueado
         sem_wait(&sistema->cola_solicitudes.mutex_cola);
@@ -39,15 +39,15 @@ void* procesar_solicitudes(void* arg){
         //Ejecutar la accion del usuario
         switch (solicit.accion){
 
-        case ACCION_RESERVA: reservar_nodo(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.tipo_usuario,solicit.nodo_preferido);//flata nodo preferido
+        case ACCION_RESERVA: reservar_nodo(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.tipo_usuario,solicit.nodo_preferido);//Reserva un nodo para una hora
              break;
-        case ACCION_CONSUMO: consumir_agua(sistema,solicit.id_usuario,solicit.nodo_preferido,solicit.hora_solicitada,solicit.litros_consumir,solicit.tipo_usuario);
+        case ACCION_CONSUMO: consumir_agua(sistema,solicit.id_usuario,solicit.nodo_preferido,solicit.hora_solicitada,solicit.litros_consumir,solicit.tipo_usuario);//Consume agua en un nodo reservado
              break;
-        case ACCION_CANCELACION: cancelar_reserva(sistema,solicit.id_usuario) ;
+        case ACCION_CANCELACION: cancelar_reserva(sistema,solicit.id_usuario) ;//Cancela una reserva existente
              break;
-        case ACCION_CONSULTA: consultar_presion(sistema,solicit.hora_solicitada) ;
+        case ACCION_CONSULTA: consultar_presion(sistema,solicit.hora_solicitada) ;//Consulta presión (lectores múltiples)
              break;
-        case ACCION_PAGO: pagar_excedente(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.nodo_preferido);
+        case ACCION_PAGO: pagar_excedente(sistema,solicit.id_usuario,solicit.hora_solicitada,solicit.nodo_preferido);//Paga y libera un nodo
              break;
         
         default: printf("Accion desconocida %s\n",accion_a_string(solicit.accion));
