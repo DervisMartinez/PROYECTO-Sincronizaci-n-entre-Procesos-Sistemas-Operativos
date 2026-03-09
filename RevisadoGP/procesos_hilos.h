@@ -78,7 +78,13 @@ void* proceso_monitor(void*arg){
 
         for(int i=0; i<NUM_NODOS; i++){
 
-            printf("NODO %d: Presion %3d psi %s %s\n",i+1,sistema->monitor.presion_actual[i],sistema->nodos[i].reservado?"OCUPADO":"LIBRE",sistema->nodos[i].tipo_User? "Residencial":"Industrial");
+            if(sistema->nodos[i].tipo_User != -1){ 
+             printf("NODO %d: Presion %3d psi %s %s\n",i+1,sistema->monitor.presion_actual[i],sistema->nodos[i].reservado?"OCUPADO":"LIBRE",sistema->nodos[i].tipo_User? "Residencial":"Industrial");
+            }else{
+
+                printf("NODO %d: Presion %3d psi %s %s\n",i+1,sistema->monitor.presion_actual[i],sistema->nodos[i].reservado?"OCUPADO":"LIBRE","NO ASIGNADO");
+            }
+        
         }
 
         //estadisticas
